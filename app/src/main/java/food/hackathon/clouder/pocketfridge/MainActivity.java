@@ -4,7 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
@@ -43,7 +48,7 @@ public class MainActivity extends ActionBarActivity {
      * may be best to switch to a
      * {@link android.support.v4.app.FragmentStatePagerAdapter}.
      */
-
+    Activity m_activity;
     ArrayList<View> viewList;
     /**
      * The {@link ViewPager} that will host the section contents.
@@ -57,14 +62,17 @@ public class MainActivity extends ActionBarActivity {
 
 
     private static final int login=0;
-    private String m_objectID = null ;
     private ArrayList<FoodData> upperFoodList = new ArrayList<FoodData>();
     private ArrayList<FoodData> downerFoodList = new ArrayList<FoodData>();
+
+    private SharedPreferences settings;
+    private static final String data = "ACCOUNT";
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        m_activity = this;
 
         // Create the adapter that will return a fragment for each of the three
         // primary sections of the activity.
@@ -90,7 +98,7 @@ public class MainActivity extends ActionBarActivity {
         upperList = (ListView) v2.findViewById(R.id.upper_ListView);
         downerList = (ListView) v3.findViewById(R.id.downer_ListView);
         setUpButton();
-        setUpListView();
+        readData();
     }
 
     private void setUpButton(){
@@ -113,7 +121,7 @@ public class MainActivity extends ActionBarActivity {
     private void setUpListView(){
 
         ulistAdapter = new MyExpandableListItemAdapter(
-                this, downerFoodList);
+                this, upperFoodList);
         alphaInAnimationAdapter = new AlphaInAnimationAdapter(ulistAdapter);
         alphaInAnimationAdapter.setAbsListView(upperList);
         assert alphaInAnimationAdapter.getViewAnimator() != null;
@@ -150,6 +158,16 @@ public class MainActivity extends ActionBarActivity {
             startActivityForResult(intent, login);
             return true;
         }
+        if (id == R.id.action_sync) {
+            syncListView();
+            return true;
+        }
+        if (id == R.id.action_add) {
+            Intent intent = new Intent(this, AddActivity.class);
+            startActivity(intent);
+            return true;
+        }
+
         return super.onOptionsItemSelected(item);
     }
     @Override
@@ -159,23 +177,22 @@ public class MainActivity extends ActionBarActivity {
             case login:
                 if(resultCode == ConstantVariable.RESULT_LOGIN){
                     Toast.makeText(this, "Logged in", Toast.LENGTH_SHORT).show();
-                    setUpUserData(data.getExtras().getString("HashCode"));
+                    setUpUserData();
+                    saveData();
                 }
-
                 else if(resultCode == ConstantVariable.RESULT_SIGNUP){
                     Toast.makeText(this, "Signed up", Toast.LENGTH_SHORT).show();
-                    createUserClass(data.getExtras().getString("HashCode"));
+                    createUserClass();
+                    saveData();
                 }
                 break;
         }
     }
 
-    private void setUpUserData(String hashCode){
+    private void setUpUserData(){
 
-        Log.e("Debug",hashCode);
 
-        m_objectID = hashCode;
-        ParseQuery<ParseObject> query = ParseQuery.getQuery(m_objectID);
+        ParseQuery<ParseObject> query = ParseQuery.getQuery(ConstantVariable.m_objectID);
         query.findInBackground(new FindCallback<ParseObject>() {
             public void done(List<ParseObject> scoreList, ParseException e) {
                 if (e == null) {
@@ -183,8 +200,8 @@ public class MainActivity extends ActionBarActivity {
                     downerFoodList.clear();
                     Log.d("score", "Retrieved " + scoreList.size() + " scores");
                     for(ParseObject parseObject :scoreList){
-                        if(parseObject.getString("Title").equals("Default")) {
-                            FoodData foodData = new FoodData(parseObject.getString("Title"), parseObject.getString("place"), parseObject.getString("Time"), parseObject.getDate("ExpiringDate"), parseObject.getString("Category"));
+                        if(!parseObject.getString("Title").equals("Default")) {
+                            FoodData foodData = new FoodData(parseObject.getString("Title"), parseObject.getString("Place"), parseObject.getString("EstablishDate"), parseObject.getString("ExpiringDate"), parseObject.getString("Category"),parseObject.getObjectId());
                             switch (foodData.getPlace()) {
                                 case "U":
                                     upperFoodList.add(foodData);
@@ -196,6 +213,7 @@ public class MainActivity extends ActionBarActivity {
                         }
                     }
                     updateListView();
+                    ParseObject.pinAllInBackground(scoreList);
                 } else {
                     Log.d("score", "Error: " + e.getMessage());
                 }
@@ -204,14 +222,14 @@ public class MainActivity extends ActionBarActivity {
     }
     private void updateListView(){
 
-        ulistAdapter.notifyDataSetChanged();
-        dlistAdapter.notifyDataSetChanged();
+        setUpListView();
+        Log.e("Debug",Integer.toString(upperFoodList.size()));
+        Log.e("Debug",Integer.toString(downerFoodList.size()));
 
     }
-    private void createUserClass(String hashCode){
-        m_objectID = hashCode;
+    private void createUserClass(){
 
-        final ParseObject p = new ParseObject(m_objectID);
+        ParseObject p = new ParseObject(ConstantVariable.m_objectID);
 
         p.put("Title", "Default");
         p.put("Place", "Default");
@@ -220,9 +238,99 @@ public class MainActivity extends ActionBarActivity {
         p.put("Category","Default");
         p.saveInBackground(new SaveCallback() {
             public void done(ParseException e) {
-                // We have to use utility classes to add behavior to our ParseObjects.
-
+                if(e == null){
+                    Log.e("Debug","Created new data Class");
+                }
+                else {
+                    Log.e("Debug", e.toString());
+                    Toast.makeText(m_activity, "Sorry. Something goes wrong", Toast.LENGTH_SHORT).show();
+                }
             }
         });
     }
+
+    private void syncListView(){
+
+        ConnectivityManager conMgr = (ConnectivityManager)getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetwork = conMgr.getActiveNetworkInfo();
+
+        if (activeNetwork != null && activeNetwork.isConnected()) {
+            //Online Mode
+
+            ParseQuery<ParseObject> query = ParseQuery.getQuery(ConstantVariable.m_objectID);
+
+            query.findInBackground(new FindCallback<ParseObject>() {
+                public void done(List<ParseObject> scoreList, ParseException e) {
+                    if (e == null) {
+                        upperFoodList.clear();
+                        downerFoodList.clear();
+                        Log.d("score", "Retrieved " + scoreList.size() + " scores");
+                        for (ParseObject parseObject : scoreList) {
+                            if (!parseObject.getString("Title").equals("Default")) {
+                                FoodData foodData = new FoodData(parseObject.getString("Title"), parseObject.getString("Place"), parseObject.getString("EstablishDate"), parseObject.getString("ExpiringDate"), parseObject.getString("Category"),parseObject.getObjectId());
+                                switch (foodData.getPlace()) {
+                                    case "U":
+                                        upperFoodList.add(foodData);
+                                        break;
+                                    case "D":
+                                        downerFoodList.add(foodData);
+                                        break;
+                                }
+                            }
+                        }
+                        updateListView();
+                        ParseObject.pinAllInBackground(scoreList);
+                    } else {
+                        Log.d("score", "Error: " + e.getMessage());
+                        Toast.makeText(m_activity,"You must login first",Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        }
+        else{
+            //Offline Mode
+            ParseQuery<ParseObject> query = ParseQuery.getQuery(ConstantVariable.m_objectID);
+            query.fromLocalDatastore();
+            query.findInBackground(new FindCallback<ParseObject>() {
+                public void done(List<ParseObject> scoreList, ParseException e) {
+                    if (e == null) {
+                        upperFoodList.clear();
+                        downerFoodList.clear();
+                        Log.d("score", "Retrieved " + scoreList.size() + " scores");
+                        for (ParseObject parseObject : scoreList) {
+                            if (!parseObject.getString("Title").equals("Default")) {
+                                FoodData foodData = new FoodData(parseObject.getString("Title"), parseObject.getString("place"), parseObject.getString("Time"), parseObject.getString("ExpiringDate"), parseObject.getString("Category"),parseObject.getObjectId());
+                                switch (foodData.getPlace()) {
+                                    case "U":
+                                        upperFoodList.add(foodData);
+                                        break;
+                                    case "D":
+                                        downerFoodList.add(foodData);
+                                        break;
+                                }
+                            }
+                        }
+                        updateListView();
+                    } else {
+                        Log.d("score", "Error: " + e.getMessage());
+                        Toast.makeText(m_activity,"You must login first",Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
+        }
+
+    }
+
+    private void readData(){
+        settings = getSharedPreferences(data,0);
+        ConstantVariable.m_objectID = settings.getString("ID", "");
+    }
+    private void saveData(){
+        settings = getSharedPreferences(data,0);
+        settings.edit()
+                .putString("ID", ConstantVariable.m_objectID)
+                .apply();
+
+    }
+
 }

@@ -131,6 +131,7 @@ public class SettingActivity extends Activity {
                     if (user != null) {
                         // Hooray! The user is logged in.
                         Log.e("Debug", "Logged in");
+                        ConstantVariable.m_objectID = user.getObjectId();
                         String HashCode = (String) user.get("HashCode");
                         Intent i=new Intent();
                         Bundle b=new Bundle();
@@ -151,6 +152,7 @@ public class SettingActivity extends Activity {
                                 if (e == null) {
                                     // Hooray! Let them use the app now.
                                     Log.e("Debug", "Signed up");
+                                    ConstantVariable.m_objectID = user_tmp.getObjectId();
                                     Intent i=new Intent();
                                     Bundle b=new Bundle();
                                     b.putString("isLogin", "True");

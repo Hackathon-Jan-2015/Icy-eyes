@@ -6,12 +6,21 @@ package food.hackathon.clouder.pocketfridge;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+
+import com.parse.FindCallback;
+import com.parse.GetCallback;
+import com.parse.ParseException;
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
+
 import java.util.ArrayList;
+import java.util.List;
 
 public class MyExpandableListItemAdapter extends
         ExpandableListItemAdapter<FoodData> {
@@ -29,7 +38,6 @@ public class MyExpandableListItemAdapter extends
                 R.id.expandablelistitem_card_content, items);
         mContext = context;
         mMemoryCache = new BitmapCache();
-        //setActionViewResId(R.id.expandablelistitem_card_title);
 
     }
 
@@ -57,8 +65,30 @@ public class MyExpandableListItemAdapter extends
 
             @Override
             public void onClick(View v) {
-                    remove(position);
+
                     notifyDataSetChanged();
+                    ParseQuery<ParseObject> query = ParseQuery.getQuery(ConstantVariable.m_objectID);
+                    query.fromLocalDatastore();
+                    query.getInBackground(getItems().get(position).objectID, new GetCallback<ParseObject>() {
+                        public void done(ParseObject object, ParseException e) {
+                            if (e == null) {
+                                object.unpinInBackground();
+                            } else {
+                                Log.e("Debug",e.toString());
+                            }
+                        }
+                    });
+                    ParseQuery<ParseObject> query2 = ParseQuery.getQuery(ConstantVariable.m_objectID);
+                    query2.getInBackground(getItems().get(position).objectID, new GetCallback<ParseObject>() {
+                    public void done(ParseObject object, ParseException e) {
+                        if (e == null) {
+                            object.deleteInBackground();
+                        } else {
+                            Log.e("Debug",e.toString());
+                        }
+                    }
+                    });
+                    remove(position);
             }
 
         });

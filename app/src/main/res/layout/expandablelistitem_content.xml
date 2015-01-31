@@ -3,16 +3,48 @@
     android:id="@+id/LinearLayout1"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:orientation="vertical" >
+    android:orientation="vertical"
+    >
 
     <TextView
-        android:id="@+id/contentTextView"
-        android:textSize="14sp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:textAppearance="?android:attr/textAppearanceMedium"
-        android:autoLink="web"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Title:"
+        android:id="@+id/contentTextView"
+        android:textColor="@drawable/blue"
         />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="MD:"
+        android:id="@+id/textView_md"
+        android:textColor="@drawable/blue"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="EXP:"
+        android:id="@+id/textView_exp"
+        android:textColor="@drawable/blue"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Size:"
+        android:id="@+id/textView_size"
+        android:textColor="@drawable/blue"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Note:"
+        android:id="@+id/textView_note"
+        android:textColor="@drawable/blue"/>
 
 </LinearLayout>
