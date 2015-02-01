@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.support.v4.view.PagerTitleStrip;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.Fragment;
@@ -19,6 +20,7 @@ import android.support.v4.app.FragmentPagerAdapter;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -90,15 +92,19 @@ public class MainActivity extends ActionBarActivity {
         viewList.add(v1);
         viewList.add(v2);
         viewList.add(v3);
-        mViewPager.setAdapter(new MyViewPagerAdapter(viewList));
+        mViewPager.setAdapter(new MyViewPagerAdapter(viewList, this));
         mViewPager.setCurrentItem(0);
-
+        PagerTitleStrip titleStrip = (PagerTitleStrip) findViewById(R.id.pager_title_strip);
+        titleStrip.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 24);
         upperFridge = (ImageButton) v1.findViewById(R.id.upperButton);
         downerFridge = (ImageButton) v1.findViewById(R.id.downerButton);
         upperList = (ListView) v2.findViewById(R.id.upper_ListView);
         downerList = (ListView) v3.findViewById(R.id.downer_ListView);
         setUpButton();
         readData();
+        addTemplateList();
+        updateListView();
+        syncListView();
     }
 
     private void setUpButton(){
@@ -189,10 +195,18 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
+    private void addTemplateList(){
+        for(int i = 0; i<5; i++) {
+            FoodData foodData = new FoodData("", "", "", "", "", "");
+            upperFoodList.add(foodData);
+            downerFoodList.add(foodData);
+        }
+    }
+
     private void setUpUserData(){
 
-
         ParseQuery<ParseObject> query = ParseQuery.getQuery(ConstantVariable.m_objectID);
+        query.addDescendingOrder("ExpiringDate");
         query.findInBackground(new FindCallback<ParseObject>() {
             public void done(List<ParseObject> scoreList, ParseException e) {
                 if (e == null) {
@@ -212,6 +226,8 @@ public class MainActivity extends ActionBarActivity {
                             }
                         }
                     }
+                    if(upperFoodList.size()< 5)addTemplateList();
+                    if(downerFoodList.size()<5)addTemplateList();
                     updateListView();
                     ParseObject.pinAllInBackground(scoreList);
                 } else {
@@ -258,7 +274,7 @@ public class MainActivity extends ActionBarActivity {
             //Online Mode
 
             ParseQuery<ParseObject> query = ParseQuery.getQuery(ConstantVariable.m_objectID);
-
+            query.addDescendingOrder("ExpiringDate");
             query.findInBackground(new FindCallback<ParseObject>() {
                 public void done(List<ParseObject> scoreList, ParseException e) {
                     if (e == null) {
@@ -278,6 +294,8 @@ public class MainActivity extends ActionBarActivity {
                                 }
                             }
                         }
+                        if(upperFoodList.size()< 5)addTemplateList();
+                        if(downerFoodList.size()<5)addTemplateList();
                         updateListView();
                         ParseObject.pinAllInBackground(scoreList);
                     } else {
@@ -291,12 +309,12 @@ public class MainActivity extends ActionBarActivity {
             //Offline Mode
             ParseQuery<ParseObject> query = ParseQuery.getQuery(ConstantVariable.m_objectID);
             query.fromLocalDatastore();
+            query.addDescendingOrder("ExpiringDate");
             query.findInBackground(new FindCallback<ParseObject>() {
                 public void done(List<ParseObject> scoreList, ParseException e) {
                     if (e == null) {
                         upperFoodList.clear();
                         downerFoodList.clear();
-                        Log.d("score", "Retrieved " + scoreList.size() + " scores");
                         for (ParseObject parseObject : scoreList) {
                             if (!parseObject.getString("Title").equals("Default")) {
                                 FoodData foodData = new FoodData(parseObject.getString("Title"), parseObject.getString("place"), parseObject.getString("Time"), parseObject.getString("ExpiringDate"), parseObject.getString("Category"),parseObject.getObjectId());
@@ -310,6 +328,8 @@ public class MainActivity extends ActionBarActivity {
                                 }
                             }
                         }
+                        if(upperFoodList.size()< 5)addTemplateList();
+                        if(downerFoodList.size()<5)addTemplateList();
                         updateListView();
                     } else {
                         Log.d("score", "Error: " + e.getMessage());

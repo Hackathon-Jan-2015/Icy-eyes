@@ -9,6 +9,8 @@
     <drawable name="red">#FF0000</drawable>
 
     <drawable name="blue">#2979ff</drawable>
+    
+    <drawable name="lightBlue">#BBDEFB</drawable>
 
     <drawable name="gray">#616161</drawable>
 

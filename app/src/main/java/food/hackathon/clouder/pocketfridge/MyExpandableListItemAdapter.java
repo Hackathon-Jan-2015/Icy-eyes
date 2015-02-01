@@ -11,6 +11,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.parse.FindCallback;
@@ -47,13 +48,43 @@ public class MyExpandableListItemAdapter extends
         View v = LayoutInflater.from(mContext).inflate(
                 R.layout.expandablelistitem_title, null);
         TextView tv = (TextView) v.findViewById(R.id.item_Title);
+        ImageView imageView = (ImageView) v.findViewById(R.id.imageView);
+
+        switch(getItem(position).category){
+            case "Vegetable":
+                imageView.setImageResource(R.drawable.veg);
+                break;
+            case "Fruit":
+                imageView.setImageResource(R.drawable.fru);
+                break;
+            case "Meat":
+                imageView.setImageResource(R.drawable.meat);
+                break;
+            case "Fish":
+                imageView.setImageResource(R.drawable.fish);
+                break;
+            case "Bread":
+                imageView.setImageResource(R.drawable.bread);
+                break;
+            case "Dairy":
+                imageView.setImageResource(R.drawable.milk);
+                break;
+            case "Junkfood":
+                imageView.setImageResource(R.drawable.pizza);
+                break;
+            case "Others":
+                imageView.setImageResource(R.drawable.egg);
+                break;
+            case "Default":
+                break;
+        }
         if (tv == null) {
             tv = new TextView(mContext);
         }
         tv.setText(getItem(position).title);
         tv.setTextColor(Color.BLACK);
         tv.setAlpha(0.87f);
-        tv.setTextSize(16);
+        tv.setTextSize(35);
 
         tv = (TextView) v.findViewById(R.id.item_Date);
         tv.setText(getItem(position).time);

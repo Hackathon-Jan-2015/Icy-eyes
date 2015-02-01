@@ -1,5 +1,6 @@
 package food.hackathon.clouder.pocketfridge;
 
+import android.app.Activity;
 import android.support.v4.view.PagerAdapter;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,9 +12,11 @@ import java.util.List;
  */
 public class MyViewPagerAdapter extends PagerAdapter {
     private List<View> mListViews;
-
-    public MyViewPagerAdapter(List<View> mListViews) {
+    private Activity m_activity;
+    private String title[] = {"","Freezer","Cooler"};
+    public MyViewPagerAdapter(List<View> mListViews, Activity activity) {
         this.mListViews = mListViews;//构造方法，参数是我们的页卡，这样比较方便。
+        this.m_activity = activity;
     }
 
     @Override
@@ -36,5 +39,9 @@ public class MyViewPagerAdapter extends PagerAdapter {
     @Override
     public boolean isViewFromObject(View arg0, Object arg1) {
         return arg0==arg1;//官方提示这样写
+    }
+    @Override
+    public CharSequence getPageTitle(int position) {
+        return title[position];
     }
 }
